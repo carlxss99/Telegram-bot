@@ -1,0 +1,133 @@
+/* Comando /publicidad */
+var lang = User.getProperty("language") || "en";
+
+var messages = {
+    es: {
+        notRegistered: "⚠️ Primero debes registrarte usando /register.",
+        noAdLink: "⏳ Actualmente no hay enlaces de publicidad disponibles. ¡Vuelve más tarde!",
+        adIntro: "🎉 ¡Atención! Tienes una nueva oportunidad de ganar puntos.\n\n👀 Abre el enlace y gana 50 puntos.\n\n🔗 Pulsa 'Visitar Publicidad' y espera mientras confirmamos tu visita. ¡Tu apoyo es fundamental! 🍀",
+        confirmAd: "✅ Confirmar visita",
+        backToMenu: "🔙 Volver al Menú",
+        visitAd: "🚀 Visitar Publicidad",
+        limitReached: "⏳ Has alcanzado el límite de 10 anuncios. Espera 2 horas antes de ver más anuncios."
+    },
+    en: {
+        notRegistered: "⚠️ First, you must register using /register.",
+        noAdLink: "⏳ There are no advertisement links available at the moment. Check back later!",
+        adIntro: "🎉 Attention! You have a new chance to earn points.\n\n👀 Open the link and earn 50 points!\n\n🔗 Click 'Visit Ad' and wait while we confirm your visit. Your support is essential! 🍀",
+        confirmAd: "✅ Confirm visit",
+        backToMenu: "🔙 Back to Menu",
+        visitAd: "🚀 Visit Ad",
+        limitReached: "⏳ You have reached the limit of 10 ads. Wait 2 hours before viewing more ads."
+    },
+    ru: {
+        notRegistered: "⚠️ Сначала необходимо зарегистрироваться с помощью /register.",
+        noAdLink: "⏳ В данный момент нет доступных рекламных ссылок. Попробуйте позже!",
+        adIntro: "🎉 Внимание! У вас есть новая возможность заработать очки.\n\n👀 Откройте ссылку и вы можете заработать 50 очков.\n\n🔗 Нажмите 'Посетить рекламу' и подождите, пока мы подтвердим ваш визит. Ваша поддержка важна! 🍀",
+        confirmAd: "✅ Подтвердить посещение",
+        backToMenu: "🔙 Вернуться в меню",
+        visitAd: "🚀 Посетить рекламу",
+        limitReached: "⏳ Вы достигли лимита 10 объявлений. Подождите 2 часа, прежде чем просматривать новые объявления."
+    },
+    hi: {
+        notRegistered: "⚠️ सबसे पहले आपको /register का उपयोग करके पंजीकरण करना होगा।",
+        noAdLink: "⏳ इस समय कोई विज्ञापन लिंक उपलब्ध नहीं हैं। बाद में जांचें!",
+        adIntro: "🎉 ध्यान दें! आपके पास अंक अर्जित करने का एक नया मौका है।\n\n👀 लिंक खोलें और आप 50 अंक तक जीत सकते हैं!\n\n🔗 'विज्ञापन देखें' पर क्लिक करें और प्रतीक्षा करें जबकि हम आपकी यात्रा की पुष्टि करें। आपका समर्थन आवश्यक है! 🍀",
+        confirmAd: "✅ यात्रा की पुष्टि करें",
+        backToMenu: "🔙 मेनू पर वापस जाएं",
+        visitAd: "🚀 विज्ञापन देखें",
+        limitReached: "⏳ आपने 10 विज्ञापनों की सीमा तक पहुँच चुके हैं। अधिक विज्ञापन देखने से पहले 2 घंटे प्रतीक्षा करें।"
+    },
+    zh: {
+        notRegistered: "⚠️ 首先，您必须使用 /register 进行注册。",
+        noAdLink: "⏳ 当前没有可用的广告链接，请稍后再试！",
+        adIntro: "🎉 注意！您有新的机会赚取积分。\n\n👀 打开链接，您可能赢得 50 积分！\n\n🔗 点击 '访问广告' 并等待我们确认您的访问。您的支持至关重要！🍀",
+        confirmAd: "✅ 确认访问",
+        backToMenu: "🔙 返回菜单",
+        visitAd: "🚀 访问广告",
+        limitReached: "⏳ 您已达到10个广告的观看限制。请等待2小时后再查看更多广告。"
+    },
+    ja: {
+        notRegistered: "⚠️ まず、/register を使用して登録する必要があります。",
+        noAdLink: "⏳ 現在、利用可能な広告リンクはありません。後でもう一度確認してください！",
+        adIntro: "🎉 注意！ポイントを獲得する新たなチャンスがあります。\n\n👀 リンクを開くと、最大50ポイント獲得できるかもしれません！\n\n🔗 「広告を見る」をクリックし、訪問を確認するまでお待ちください。あなたのサポートが重要です！🍀",
+        confirmAd: "✅ 訪問を確認",
+        backToMenu: "🔙 メニューに戻る",
+        visitAd: "🚀 広告を見る",
+        limitReached: "⏳ 10件の広告の上限に達しました。さらに広告を見るには2時間お待ちください。"
+    },
+    ar: {
+        notRegistered: "⚠️ أولاً، يجب عليك التسجيل باستخدام /register.",
+        noAdLink: "⏳ لا توجد روابط إعلانات متاحة في الوقت الحالي. حاول لاحقاً!",
+        adIntro: "🎉 انتباه! لديك فرصة جديدة لكسب النقاط.\n\n👀 افتح الرابط وقد تتمكن من ربح 50 نقطة!\n\n🔗 اضغط على 'زيارة الإعلان' وانتظر بينما نؤكد زيارتك. دعمك مهم للغاية! 🍀",
+        confirmAd: "✅ تأكيد الزيارة",
+        backToMenu: "🔙 العودة إلى القائمة",
+        visitAd: "🚀 زيارة الإعلان",
+        limitReached: "⏳ لقد وصلت إلى الحد الأقصى من 10 إعلانات. انتظر ساعتين قبل مشاهدة المزيد من الإعلانات."
+    }
+};
+
+// Verificar si el usuario está registrado
+var userData = Bot.getProperty("user_" + user.telegramid);
+if (!userData) {
+    Bot.sendMessage(messages[lang].notRegistered);
+    return;
+}
+
+// Obtener el contador de anuncios y el inicio del período de 2 horas
+var adCount = User.getProperty("ad_count") || 0;
+var adPeriodStart = User.getProperty("ad_period_start") || 0;
+var currentTime = new Date().getTime();
+
+// Si han pasado 2 horas desde el inicio del período, reiniciar contador
+if (!adPeriodStart || currentTime - adPeriodStart >= 7200000) {
+    adCount = 0;
+    adPeriodStart = currentTime;
+    User.setProperty("ad_count", adCount, "integer");
+    User.setProperty("ad_period_start", adPeriodStart, "number");
+}
+
+// Verificar si el usuario ha alcanzado el límite
+if (adCount >= 10) {
+    var remainingTime = 7200000 - (currentTime - adPeriodStart);
+    var minutes = Math.floor(remainingTime / 60000);
+    var seconds = Math.floor((remainingTime % 60000) / 1000);
+    var messageText = messages[lang].limitReached + "\n\n⏳ Remaining Time: " + minutes + " min " + seconds + " sec.";
+
+    var backButton = [[{ title: messages[lang].backToMenu, command: "/start" }]];
+    Bot.sendInlineKeyboard(backButton, messageText);
+    return;
+}
+
+// Obtener lista de enlaces de publicidad
+var adLinks = Bot.getProperty("ad_links") || [];
+if (!Array.isArray(adLinks) || adLinks.length === 0) {
+    Bot.sendMessage(messages[lang].noAdLink);
+    return;
+}
+
+// Seleccionar un enlace aleatorio
+var adLink = adLinks[Math.floor(Math.random() * adLinks.length)];
+
+// Incrementar contador y guardar
+adCount++;
+User.setProperty("ad_count", adCount, "integer");
+
+// Configurar visita
+User.setProperty("ad_in_progress", true, "boolean");
+User.setProperty("ad_time", currentTime, "number");
+
+// Crear teclado inline
+var keyboard = [
+    [{ title: messages[lang].visitAd, url: adLink }],
+    [{ title: messages[lang].backToMenu, command: "/start" }]
+];
+
+Bot.sendInlineKeyboard(keyboard, messages[lang].adIntro);
+
+// Evitar múltiples ejecuciones de confirmación
+if (!User.getProperty("ad_confirm_scheduled")) {
+    User.setProperty("ad_confirm_scheduled", true, "boolean");
+    Bot.run({ command: "/confirmpublicidad", run_after: 12 });
+    Bot.run({ command: "/resetConfirmFlag", run_after: 15 });
+}
