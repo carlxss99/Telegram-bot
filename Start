@@ -1,0 +1,322 @@
+// 📌 /start - Comando principal del bot
+
+// 🌎 Detectar el idioma del usuario
+var userLang = User.getProperty("language");
+if (!userLang) {
+  userLang = request.language_code ? request.language_code.substring(0, 2).toLowerCase() : "es";
+  if (["es", "en", "ru", "ja", "hi", "zh", "ar"].indexOf(userLang) === -1) {  
+    userLang = "es";  
+  }  
+  User.setProperty("language", userLang, "string");
+}
+
+// 🌍 Mensajes en varios idiomas
+var messages = {
+  registro_exitoso: {
+    es: "✅ Registro exitoso. ¡Ya puedes empezar a usar el bot! 🎉",
+    en: "✅ Successful registration. You can now start using the bot! 🎉",
+    ru: "✅ Успешная регистрация. Теперь вы можете использовать бот! 🎉",
+    ja: "✅ 登録が完了しました。ボットを使い始めましょう！🎉",
+    hi: "✅ पंजीकरण सफल रहा। अब आप बॉट का उपयोग शुरू कर सकते हैं! 🎉",
+    zh: "✅ 注册成功。现在可以开始使用机器人了！🎉",
+    ar: "✅ تم التسجيل بنجاح. يمكنك الآن بدء استخدام البوت! 🎉"
+  },
+  nuevo_referido: {
+    es: "🎉 Un nuevo usuario se ha unido con tu enlace de referido. Has ganado 50 puntos.",
+    en: "🎉 A new user has joined using your referral link. You have earned 50 points.",
+    ru: "🎉 Новый пользователь присоединился по вашей реферальной ссылке. Вы заработали 50 очков.",
+    ja: "🎉 あなたの紹介リンクから新しいユーザーが参加しました。50ポイントを獲得しました。",
+    hi: "🎉 एक नया उपयोगकर्ता आपके रेफरल लिंक से जुड़ा है। आपने 50 अंक अर्जित किए हैं।",
+    zh: "🎉 一个新用户通过您的推荐链接加入。您获得了50积分。",
+    ar: "🎉 مستخدم جديد انضم عبر رابط الإحالة الخاص بك. لقد كسبت 50 نقطة."
+  },
+  ya_atraido: {
+    es: "🔔 Ya has sido atraído anteriormente.",
+    en: "🔔 You have already been attracted before.",
+    ru: "🔔 Вы уже были привлечены ранее.",
+    ja: "🔔 あなたはすでに以前に誘導されました。",
+    hi: "🔔 आपको पहले ही आकर्षित किया जा चुका है।",
+    zh: "🔔 你以前已经被吸引过。",
+    ar: "🔔 لقد تم جذبك من قبل."
+  },
+  atraido_canal: {
+    es: "🎉 ¡Has sido atraído a través del canal!",
+    en: "🎉 You have been attracted through the channel!",
+    ru: "🎉 Вы были привлечены через канал!",
+    ja: "🎉 チャンネルを通じて誘導されました！",
+    hi: "🎉 आपको चैनल के माध्यम से आकर्षित किया गया है!",
+    zh: "🎉 你是通过频道吸引的！",
+    ar: "🎉 لقد تم جذبك عبر القناة!"
+  }
+};
+
+// 📝 Registrar al usuario si no existe
+var userData = Bot.getProperty("user_" + user.telegramid);
+if (!userData) {
+  userData = {
+    username: user.username || "Usuario_" + user.telegramid,
+    points: 0,
+    referrals: 0,
+    links: [],
+    referredBy: null
+  };
+
+  // 📢 Verificar si el usuario fue referido
+  var referrerId = request.start_param;
+  if (referrerId && referrerId !== user.telegramid.toString()) {  
+    var referrerData = Bot.getProperty("user_" + referrerId);  
+    if (referrerData) {  
+      referrerData.referrals += 1;
+      referrerData.points += 50;
+
+      // Guardar cambios en el usuario referidor
+      Bot.setProperty("user_" + referrerId, referrerData, "json");
+
+      // Notificar al referidor
+      Bot.sendMessageToChatWithId(referrerId, messages.nuevo_referido[userLang]);
+
+      // Registrar el referidor en los datos del nuevo usuario
+      userData.referredBy = referrerId;
+      userData.points += 50;
+    }
+  }
+
+  // Guardar datos del nuevo usuario
+  Bot.setProperty("user_" + user.telegramid, userData, "json");
+  Bot.sendMessage(messages.registro_exitoso[userLang]);
+}
+
+// 🚀 Función de seguimiento de referidos
+Libs.ReferralLib.currentUser.track({
+    onAlreadyAttracted: function() {
+        Bot.sendMessage(messages.ya_atraido[userLang]);
+    },
+    onAttracted: function() {
+        Bot.sendMessage(messages.atraido_canal[userLang]);
+    }
+});
+// 📢 Función para enviar el mensaje de bienvenida
+function sendWelcomeMessage() {
+  var lang = User.getProperty("language") || "es";
+
+  var messages = {  
+    es: "👋 ¡Bienvenido a Referral Assistant! 🎉\n\n" +  
+        "🔹 ¿Qué es Referral Assistant?\n" +  
+        "📌 Un bot de Telegram diseñado para simplificar el intercambio de enlaces de referidos entre usuarios. " +  
+        "Comparte tus enlaces, descubre los de otros y gana puntos por cada interacción.\n\n" +  
+        "💡 ¿Cómo funciona?\n" +  
+        "1️⃣ Registro: Únete con el botón 'Registrar'.\n" +  
+        "2️⃣ Agregar Enlace: Comparte tu enlace con la comunidad.\n" +  
+        "3️⃣ Visitar Enlace: Explora y visita enlaces para ganar puntos.\n" +  
+        "4️⃣ Ranking: Consulta la clasificación de usuarios con más puntos.\n" +  
+        "5️⃣ Mis Puntos: Revisa tu saldo de puntos.\n" +  
+        "6️⃣ Referido: Obtén tu enlace único y gana recompensas.\n\n" +  
+        "⚡ Usa los botones a continuación para comenzar:",  
+    en: "👋 Welcome to Referral Assistant! 🎉\n\n" +  
+        "🔹 What is Referral Assistant?\n" +  
+        "📌 A Telegram bot designed to simplify referral link sharing. " +  
+        "Share your links, discover others', and earn points for each interaction.\n\n" +  
+        "💡 How does it work?\n" +  
+        "1️⃣ Register: Join using the 'Register' button.\n" +  
+        "2️⃣ Add Link: Share your referral link.\n" +  
+        "3️⃣ Visit Links: Explore and visit links to earn points.\n" +  
+        "4️⃣ Ranking: Check the leaderboard of top users.\n" +  
+        "5️⃣ My Points: View your current balance.\n" +  
+        "6️⃣ Referral: Get your unique link and earn rewards.\n\n" +  
+        "⚡ Use the buttons below to get started:",
+    ru: "👋 Добро пожаловать в Referral Assistant! 🎉\n\n" +  
+        "🔹 Что такое Referral Assistant?\n" +  
+        "📌 Это Telegram-бот, разработанный для упрощения обмена реферальными ссылками между пользователями. " +  
+        "Делитесь своими ссылками, открывайте новые и зарабатывайте очки за каждое взаимодействие.\n\n" +  
+        "💡 Как это работает?\n" +  
+        "1️⃣ Регистрация: Присоединяйтесь через кнопку 'Зарегистрироваться'.\n" +  
+        "2️⃣ Добавить ссылку: Поделитесь своей реферальной ссылкой.\n" +  
+        "3️⃣ Посетить ссылки: Изучайте и посещайте ссылки, чтобы зарабатывать очки.\n" +  
+        "4️⃣ Рейтинг: Ознакомьтесь с рейтингом пользователей, набравших больше всего очков.\n" +  
+        "5️⃣ Мои очки: Проверьте свой текущий баланс очков.\n" +  
+        "6️⃣ Реферал: Получите свою уникальную ссылку и зарабатывайте бонусы.\n\n" +  
+        "⚡ Используйте кнопки ниже, чтобы начать:",
+    ja: "👋 Referral Assistantへようこそ！🎉\n\n" +  
+        "🔹 Referral Assistantとは？\n" +  
+        "📌 ユーザー間での紹介リンクの共有を簡素化するために設計されたTelegramボットです。 " +  
+        "ご自身のリンクを共有し、他のリンクを見つけ、各インタラクションでポイントを獲得しましょう。\n\n" +  
+        "💡 使い方は？\n" +  
+        "1️⃣ 登録: 「登録」ボタンを使って参加してください。\n" +  
+        "2️⃣ リンク追加: ご自身の紹介リンクを共有してください。\n" +  
+        "3️⃣ リンク訪問: リンクを訪れてポイントを獲得してください。\n" +  
+        "4️⃣ ランキング: 最も多くのポイントを獲得したユーザーのランキングを確認してください。\n" +  
+        "5️⃣ 私のポイント: 現在のポイント残高を確認してください。\n" +  
+        "6️⃣ 紹介: 自分だけのリンクを取得して報酬を得ましょう。\n\n" +  
+        "⚡ 下のボタンを使って始めましょう:",
+    hi: "👋 Referral Assistant में आपका स्वागत है! 🎉\n\n" +  
+        "🔹 Referral Assistant क्या है?\n" +  
+        "📌 यह एक Telegram बोट है जिसे उपयोगकर्ताओं के बीच रेफरल लिंक साझा करना सरल बनाने के लिए डिज़ाइन किया गया है। " +  
+        "अपने लिंक साझा करें, दूसरों के लिंक खोजें और प्रत्येक इंटरैक्शन के लिए अंक कमाएं।\n\n" +  
+        "💡 यह कैसे काम करता है?\n" +  
+        "1️⃣ पंजीकरण: 'पंजीकरण' बटन का उपयोग करके जुड़ें।\n" +  
+        "2️⃣ लिंक जोड़ें: अपना रेफरल लिंक साझा करें।\n" +  
+        "3️⃣ लिंक देखें: लिंक पर जाएं और अंक कमाएं।\n" +  
+        "4️⃣ रैंकिंग: शीर्ष उपयोगकर्ताओं की सूची देखें।\n" +  
+        "5️⃣ मेरे अंक: अपने वर्तमान अंक देखें।\n" +  
+        "6️⃣ रेफरल: अपना विशेष लिंक प्राप्त करें और पुरस्कार जीतें।\n\n" +  
+        "⚡ नीचे दिए गए बटन का उपयोग करके शुरुआत करें:",
+    zh: "👋 欢迎使用 Referral Assistant！🎉\n\n" +  
+        "🔹 什么是 Referral Assistant？\n" +  
+        "📌 这是一个 Telegram 机器人，旨在简化用户之间的推荐链接分享。\n\n" +  
+        "💡 如何使用？\n" +  
+        "1️⃣ 注册：点击“注册”按钮加入。\n" +  
+        "2️⃣ 添加链接：与社区分享你的链接。\n" +  
+        "3️⃣ 访问链接：浏览并访问链接以赚取积分。\n" +  
+        "4️⃣ 排行榜：查看积分最高的用户排名。\n" +  
+        "5️⃣ 我的积分：查看你的当前积分。\n" +  
+        "6️⃣ 推荐：获取你的独特链接并赚取奖励。\n\n" +  
+        "⚡ 请使用下面的按钮开始：",
+    ar: "👋 مرحبًا بك في Referral Assistant! 🎉\n\n" +
+        "🔹 ما هو Referral Assistant؟\n" +
+        "📌 بوت تيليجرام مصمم لتبسيط مشاركة روابط الإحالة بين المستخدمين. " +
+        "شارك روابطك، واكتشف روابط الآخرين، واكسب نقاطًا مع كل تفاعل.\n\n" +
+        "💡 كيف يعمل؟\n" +
+        "1️⃣ التسجيل: انضم باستخدام زر 'التسجيل'.\n" +
+        "2️⃣ إضافة رابط: شارك رابطك مع المجتمع.\n" +
+        "3️⃣ زيارة الرابط: استعرض الروابط وقم بزيارتها لكسب النقاط.\n" +
+        "4️⃣ الترتيب: تحقق من تصنيف المستخدمين ذوي النقاط الأعلى.\n" +
+        "5️⃣ نقاطي: راجع رصيد نقاطك.\n" +
+        "6️⃣ الإحالة: احصل على رابطك الفريد واكسب المكافآت.\n\n" +
+        "⚡ استخدم الأزرار أدناه للبدء:"  
+  };
+
+  Bot.sendMessage(messages[lang]);
+}
+
+// 🚀 Enviar mensaje de bienvenida
+sendWelcomeMessage();
+
+// 🎛️ Función de seguimiento de referidos
+Libs.ReferralLib.currentUser.track({
+    onTouchOwnLink: function() {
+        Bot.sendMessage("👤 Has tocado tu propio enlace de referido.");
+    },
+    onAlreadyAttracted: function() {
+        Bot.sendMessage("🔔 Ya has sido atraído anteriormente.");
+    },
+    onAttracted: function() {
+        Bot.sendMessage("🎉 ¡Has sido atraído a través del canal!");
+    },
+    onAttractedByUser: function(refUser) {
+        Bot.sendMessage("🎉 Has sido atraído por " + refUser.first_name + " (" + refUser.nickname + ")");
+    }
+});
+
+// 🎛️ Menú interactivo
+var keyboards = {
+  es: [
+    [{ title: "🌎 Change language", command: "/setlang" }],
+    [{ title: "📝 Registrar", command: "/register" }],
+    [{ title: "🔗 Agregar Enlace", command: "/addlink" }],
+    [{ title: "❌ Eliminar Enlace", command: "/removelink" }],
+    [{ title: "👀 Visitar Enlace", command: "/visitlink" }],
+    [{ title: "🏆 Ver Ranking", command: "/rankings" }],
+    [{ title: "📊 Mis Puntos", command: "/checkpoints" }],
+    [{ title: "🎁 Bonificación diaria", command: "/dailybonus" }],
+    [{ title: "👤 Perfil", command: "/profile" }],
+    [{ title: "❓ Ayuda", command: "/help" }],
+    [{ title: "🔗 Referido", command: "/referido" }],
+    [{ title: "🎁 Ver Anuncios", command: "/publicidad" }]
+  ],
+  en: [
+    [{ title: "🌎 Change language", command: "/setlang" }],
+    [{ title: "📝 Register", command: "/register" }],
+    [{ title: "🔗 Add Link", command: "/addlink" }],
+    [{ title: "❌ Remove Link", command: "/removelink" }],
+    [{ title: "👀 Visit Link", command: "/visitlink" }],
+    [{ title: "🏆 View Ranking", command: "/rankings" }],
+    [{ title: "📊 My Points", command: "/checkpoints" }],
+    [{ title: "🎁 Daily Bonus", command: "/dailybonus" }],
+    [{ title: "👤 Profile", command: "/profile" }],
+    [{ title: "❓ Help", command: "/help" }],
+    [{ title: "🔗 Referral", command: "/referido" }],
+    [{ title: "🎁 View Ads", command: "/publicidad" }]
+  ],
+  ru: [
+    [{ title: "🌎 Изменить язык", command: "/setlang" }],
+    [{ title: "📝 Регистрация", command: "/register" }],
+    [{ title: "🔗 Добавить ссылку", command: "/addlink" }],
+    [{ title: "❌ Удалить ссылку", command: "/removelink" }],
+    [{ title: "👀 Посетить ссылку", command: "/visitlink" }],
+    [{ title: "🏆 Посмотреть рейтинг", command: "/rankings" }],
+    [{ title: "📊 Мои очки", command: "/checkpoints" }],
+    [{ title: "🎁 Ежедневный бонус", command: "/dailybonus" }],
+    [{ title: "👤 Профиль", command: "/profile" }],
+    [{ title: "❓ Помощь", command: "/help" }],
+    [{ title: "🔗 Рефералы", command: "/referido" }],
+    [{ title: "🎁 Посмотреть объявления", command: "/publicidad" }]
+  ],
+  ja: [
+    [{ title: "🌎 言語を変更", command: "/setlang" }],
+    [{ title: "📝 登録", command: "/register" }],
+    [{ title: "🔗 リンク追加", command: "/addlink" }],
+    [{ title: "❌ リンク削除", command: "/removelink" }],
+    [{ title: "👀 リンク訪問", command: "/visitlink" }],
+    [{ title: "🏆 ランキング", command: "/rankings" }],
+    [{ title: "📊 ポイント", command: "/checkpoints" }],
+    [{ title: "🎁 毎日ボーナス", command: "/dailybonus" }],
+    [{ title: "👤 プロフィール", command: "/profile" }],
+    [{ title: "❓ ヘルプ", command: "/help" }],
+    [{ title: "🔗 紹介", command: "/referido" }],
+    [{ title: "🎁 広告を見る", command: "/publicidad" }]
+  ],
+  hi: [
+    [{ title: "🌎 भाषा बदलें", command: "/setlang" }],
+    [{ title: "📝 पंजीकरण करें", command: "/register" }],
+    [{ title: "🔗 लिंक जोड़ें", command: "/addlink" }],
+    [{ title: "❌ लिंक हटाएं", command: "/removelink" }],
+    [{ title: "👀 लिंक देखें", command: "/visitlink" }],
+    [{ title: "🏆 रैंकिंग देखें", command: "/rankings" }],
+    [{ title: "📊 मेरे अंक", command: "/checkpoints" }],
+    [{ title: "🎁 दैनिक बोनस", command: "/dailybonus" }],
+    [{ title: "👤 प्रोफ़ाइल", command: "/profile" }],
+    [{ title: "❓ सहायता", command: "/help" }],
+    [{ title: "🔗 रेफरल", command: "/referido" }],
+    [{ title: "🎁 विज्ञापन देखें", command: "/publicidad" }]
+  ],
+  zh: [
+    [{ title: "🌎 更改语言", command: "/setlang" }],
+    [{ title: "📝 注册", command: "/register" }],
+    [{ title: "🔗 添加链接", command: "/addlink" }],
+    [{ title: "❌ 删除链接", command: "/removelink" }],
+    [{ title: "👀 访问链接", command: "/visitlink" }],
+    [{ title: "🏆 查看排名", command: "/rankings" }],
+    [{ title: "📊 我的积分", command: "/checkpoints" }],
+    [{ title: "🎁 每日奖励", command: "/dailybonus" }],
+    [{ title: "👤 个人资料", command: "/profile" }],
+    [{ title: "❓ 帮助", command: "/help" }],
+    [{ title: "🔗 推荐", command: "/referido" }],
+    [{ title: "🎁 查看广告", command: "/publicidad" }]
+  ],
+  ar: [
+    [{ title: "🌎 تغيير اللغة", command: "/setlang" }],
+    [{ title: "📝 التسجيل", command: "/register" }],
+    [{ title: "🔗 إضافة رابط", command: "/addlink" }],
+    [{ title: "❌ إزالة الرابط", command: "/removelink" }],
+    [{ title: "👀 زيارة الرابط", command: "/visitlink" }],
+    [{ title: "🏆 عرض التصنيف", command: "/rankings" }],
+    [{ title: "📊 نقاطي", command: "/checkpoints" }],
+    [{ title: "🎁 المكافأة اليومية", command: "/dailybonus" }],
+    [{ title: "👤 الملف الشخصي", command: "/profile" }],
+    [{ title: "❓ المساعدة", command: "/help" }],
+    [{ title: "🔗 الإحالة", command: "/referido" }],
+    [{ title: "🎁 عرض الإعلانات", command: "/publicidad" }]
+  ]
+};
+
+var keyboardMessages = {
+  es: "📌 Selecciona una opción:",
+  en: "📌 Select an option:",
+  ru: "📌 Выберите опцию:",
+  ja: "📌 オプションを選んでください:",
+  hi: "📌 एक विकल्प चुनें:",
+  zh: "📌 请选择一个选项:",
+  ar: "📌 اختر خياراً:"
+};
+
+Bot.sendInlineKeyboard(keyboards[userLang], keyboardMessages[userLang]);
