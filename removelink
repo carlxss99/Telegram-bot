@@ -1,0 +1,87 @@
+// Detectar el idioma del usuario
+var userLang = User.getProperty("language");
+if (!userLang) {
+  userLang = request.language_code ? request.language_code.substring(0, 2).toLowerCase() : "en";
+  if (["es", "en", "ru", "hi", "zh", "ja", "ar"].indexOf(userLang) === -1) {
+    userLang = "es";
+  }
+  User.setProperty("language", userLang, "string");
+}
+
+// Mensajes en diferentes idiomas con emojis 🎯
+var messages = {
+  es: {
+    notRegistered: "⚠️ Primero debes registrarte usando /register.",
+    noLinks: "🚫 No tienes enlaces agregados.",
+    selectLink: "🗑️ Selecciona el número del enlace que deseas eliminar:",
+    links: "🔗 Tus enlaces agregados:\n"
+  },
+  en: {
+    notRegistered: "⚠️ First, you need to register using /register.",
+    noLinks: "🚫 You have no links added.",
+    selectLink: "🗑️ Select the number of the link you want to delete:",
+    links: "🔗 Your added links:\n"
+  },
+  ru: {
+    notRegistered: "⚠️ Сначала зарегистрируйтесь, используя /register.",
+    noLinks: "🚫 У вас нет добавленных ссылок.",
+    selectLink: "🗑️ Выберите номер ссылки, которую хотите удалить:",
+    links: "🔗 Ваши добавленные ссылки:\n"
+  },
+  hi: { // Hindi
+    notRegistered: "⚠️ पहले आपको /register का उपयोग करके पंजीकरण करना होगा।",
+    noLinks: "🚫 आपके पास कोई लिंक नहीं है।",
+    selectLink: "🗑️ उस लिंक की संख्या चुनें जिसे आप हटाना चाहते हैं:",
+    links: "🔗 आपके जोड़े गए लिंक:\n"
+  },
+  zh: { // Chino simplificado
+    notRegistered: "⚠️ 首先，您需要使用 /register 进行注册。",
+    noLinks: "🚫 您没有添加任何链接。",
+    selectLink: "🗑️ 选择要删除的链接编号：",
+    links: "🔗 您已添加的链接：\n"
+  },
+  ja: { // Japonés
+    notRegistered: "⚠️ まず、/register を使用して登録する必要があります。",
+    noLinks: "🚫 追加されたリンクはありません。",
+    selectLink: "🗑️ 削除したいリンクの番号を選択してください：",
+    links: "🔗 あなたの追加したリンク：\n"
+  },
+  ar: { // Árabe
+    notRegistered: "⚠️ أولاً، تحتاج إلى التسجيل باستخدام /register.",
+    noLinks: "🚫 ليس لديك أي روابط مضافة.",
+    selectLink: "🗑️ حدد رقم الرابط الذي تريد حذفه:",
+    links: "🔗 الروابط المضافة لديك:\n"
+  }
+};
+
+// Ejecutar el código del comando
+try {
+  var userData = Bot.getProperty("user_" + user.telegramid) || { links: [] };
+
+  // Comprobar si el usuario está registrado
+  if (!userData.username) {
+    Bot.sendMessage(messages[userLang].notRegistered);
+    return;
+  }
+
+  // Comprobar si el usuario tiene enlaces agregados
+  if (userData.links.length === 0) {
+    Bot.sendMessage(messages[userLang].noLinks);
+    return;
+  }
+
+  // Crear el mensaje con los enlaces
+  var linksMessage = messages[userLang].links;
+  var keyboard = [];
+
+  for (var i = 0; i < userData.links.length; i++) {
+    linksMessage += "📌 " + (i + 1) + ": " + userData.links[i] + "\n";
+    keyboard.push([{ title: "❌ " + (i + 1).toString(), command: "/removelinkconfirm " + (i + 1) }]); // Botón para cada enlace
+  }
+
+  Bot.sendInlineKeyboard(keyboard, linksMessage + "\n" + messages[userLang].selectLink); // Enviar el mensaje y los botones
+
+} catch (error) {
+  Bot.sendMessage("❌ Ocurrió un error inesperado: " + error.message);
+  console.error("Error inesperado:", error); // Esto lo imprimirá en la consola
+}
