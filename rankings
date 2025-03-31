@@ -1,0 +1,140 @@
+function sendRankingMessage() {
+    var lang = User.getProperty("language") || "en"; // 🌍 Idioma predeterminado
+
+    var messages = {
+        en: {
+            noUsers: "❌ No registered users yet.",
+            rankingHeader: "🏆 TOP 10 Users of the Week:",
+            nextAction: "⚡ What do you want to do next?",
+            invite: "📢 Invite your friends and climb the ranks!",
+            backToMenu: "🔙 Back to Menu",
+            myPoints: "📊 My Points",
+            link: "🔗 Referral Link:",
+            points: "points"
+        },
+        es: {
+            noUsers: "❌ No hay usuarios registrados aún.",
+            rankingHeader: "🏆 TOP 10 Usuarios de la Semana:",
+            nextAction: "⚡ ¿Qué te gustaría hacer a continuación?",
+            invite: "📢 ¡Invita a tus amigos y sube en el ranking!",
+            backToMenu: "🔙 Volver al Menú",
+            myPoints: "📊 Mis Puntos",
+            link: "🔗 Enlace de referido:",
+            points: "puntos"
+        },
+        ru: {
+            noUsers: "❌ Пользователи еще не зарегистрированы.",
+            rankingHeader: "🏆 ТОП 10 пользователей недели:",
+            nextAction: "⚡ Что бы вы хотели сделать дальше?",
+            invite: "📢 Пригласите своих друзей и поднимитесь в рейтинге!",
+            backToMenu: "🔙 Назад в меню",
+            myPoints: "📊 Мои очки",
+            link: "🔗 Реферальная ссылка:",
+            points: "очков"
+        },
+        hi: {  
+            noUsers: "❌ अभी तक कोई पंजीकृत उपयोगकर्ता नहीं है।",
+            rankingHeader: "🏆 इस सप्ताह के TOP 10 उपयोगकर्ता:",
+            nextAction: "⚡ अगला कदम क्या होगा?",
+            invite: "📢 अपने दोस्तों को आमंत्रित करें और रैंक में चढ़ें!",
+            backToMenu: "🔙 मेनू में वापस जाएं",
+            myPoints: "📊 मेरे अंक",
+            link: "🔗 संदर्भ लिंक:",
+            points: "अंक"
+        },
+        zh: {  
+            noUsers: "❌ 目前还没有注册用户。",
+            rankingHeader: "🏆 本周前 10 名用户:",
+            nextAction: "⚡ 接下来你想做什么？",
+            invite: "📢 邀请你的朋友并提升排名！",
+            backToMenu: "🔙 返回菜单",
+            myPoints: "📊 我的积分",
+            link: "🔗 推荐链接:",
+            points: "积分"
+        },
+        ja: {  
+            noUsers: "❌ まだ登録されたユーザーはいません。",
+            rankingHeader: "🏆 今週のトップ10ユーザー:",
+            nextAction: "⚡ 次に何をしますか？",
+            invite: "📢 友達を招待してランキングを上げよう！",
+            backToMenu: "🔙 メニューに戻る",
+            myPoints: "📊 自分のポイント",
+            link: "🔗 紹介リンク:",
+            points: "ポイント"
+        },
+        ar: {  
+            noUsers: "❌ لا يوجد مستخدمون مسجلون بعد.",
+            rankingHeader: "🏆 أفضل 10 مستخدمين لهذا الأسبوع:",
+            nextAction: "⚡ ماذا تريد أن تفعل بعد ذلك؟",
+            invite: "📢 قم بدعوة أصدقائك وتسلق الترتيب!",
+            backToMenu: "🔙 العودة إلى القائمة",
+            myPoints: "📊 نقاطي",
+            link: "🔗 رابط الإحالة:",
+            points: "نقاط"
+        }
+    };
+
+    var allUsers = Bot.getProperty("all_users") || [];
+
+    if (!Array.isArray(allUsers) || allUsers.length === 0) {
+        Bot.sendMessage(messages[lang].noUsers);
+        return;
+    }
+
+    var ranking = [];
+
+    for (var i = 0; i < allUsers.length; i++) {
+        var uid = allUsers[i];
+        var userData = Bot.getProperty("user_" + uid);
+
+        if (userData) {
+            ranking.push({
+                id: uid,
+                username: userData.username ? userData.username.replace(/<[^>]*>/g, "") : "👤 Unknown User",
+                points: userData.points || 0,
+                links: userData.links || []
+            });
+        } else {
+            ranking.push({
+                id: uid,
+                username: "👤 Usuario no reconocido",
+                points: 0,
+                links: []
+            });
+        }
+    }
+
+    if (ranking.length === 0) {
+        Bot.sendMessage(messages[lang].noUsers);
+        return;
+    }
+
+    ranking.sort((a, b) => b.points - a.points);
+    var topRanking = ranking.slice(0, 10);
+
+    // 🎖️ Construcción del mensaje del ranking
+    var rankingMessage = messages[lang].invite + "\n\n" + messages[lang].rankingHeader + "\n\n";
+
+    for (var j = 0; j < topRanking.length; j++) {
+        var randomLink = topRanking[j].links.length > 0
+            ? topRanking[j].links[Math.floor(Math.random() * topRanking[j].links.length)]
+            : "🚫 No Link";
+
+        rankingMessage += "🔹 " + (j + 1) + ". " + topRanking[j].username + " ⭐️ - " + topRanking[j].points + " " + messages[lang].points + "\n";
+        rankingMessage += messages[lang].link + " " + (randomLink !== "🚫 No Link"
+            ? '<a href="' + randomLink + '">🔗 ' + randomLink + '</a>'
+            : randomLink) + "\n\n";
+    }
+
+    rankingMessage += "--------------------------------------------\n";
+    rankingMessage += messages[lang].nextAction + "\n"; // 🟢 Mensaje final
+
+    var keyboard = [
+        [{ title: messages[lang].backToMenu, command: "/start" }],
+        [{ title: messages[lang].myPoints, command: "/checkpoints" }]
+    ];
+
+    Bot.sendInlineKeyboard(keyboard, rankingMessage, { parse_mode: "HTML" });
+}
+
+sendRankingMessage();
