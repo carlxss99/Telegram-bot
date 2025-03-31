@@ -1,0 +1,114 @@
+if (message == "/reRegister") {
+    var lang = User.getProperty("language") || "en"; // Idioma predeterminado: inglés
+
+    // 📢 Mensajes en diferentes idiomas
+    var messages = {
+        es: {
+            alreadyRegistered: "⚠️ Ya estás registrado.",
+            registrationSuccess: "✅ Registro exitoso.",
+            nextAction: "🤔 ¿Qué te gustaría hacer a continuación?",
+            referrerPoints: "🎉 ¡Tu referidor ha ganado {points} puntos!",
+            referredSuccess: "🎉 ¡Te has registrado con éxito a través de un referidor!"
+        },
+        en: {
+            alreadyRegistered: "⚠️ You are already registered.",
+            registrationSuccess: "✅ Registration successful.",
+            nextAction: "🤔 What would you like to do next?",
+            referrerPoints: "🎉 Your referrer has earned {points} points!",
+            referredSuccess: "🎉 You have successfully registered through a referrer!"
+        },
+        ru: {
+            alreadyRegistered: "⚠️ Вы уже зарегистрированы.",
+            registrationSuccess: "✅ Регистрация прошла успешно.",
+            nextAction: "🤔 Что вы хотите сделать дальше?",
+            referrerPoints: "🎉 Ваш реферер заработал {points} очков!",
+            referredSuccess: "🎉 Вы успешно зарегистрировались через реферера!"
+        },
+        hi: { // Hindi 🇮🇳
+            alreadyRegistered: "⚠️ आप पहले से ही पंजीकृत हैं।",
+            registrationSuccess: "✅ पंजीकरण सफल हुआ।",
+            nextAction: "🤔 आप आगे क्या करना चाहेंगे?",
+            referrerPoints: "🎉 आपके रेफरर ने {points} अंक अर्जित किए हैं!",
+            referredSuccess: "🎉 आपने एक रेफरर के माध्यम से सफलतापूर्वक पंजीकरण किया है!"
+        },
+        zh: { // Chino 🇨🇳
+            alreadyRegistered: "⚠️ 您已经注册。",
+            registrationSuccess: "✅ 注册成功。",
+            nextAction: "🤔 接下来您想做什么？",
+            referrerPoints: "🎉 您的推荐人获得了 {points} 积分！",
+            referredSuccess: "🎉 您已通过推荐人成功注册！"
+        },
+        ja: { // Japonés 🇯🇵
+            alreadyRegistered: "⚠️ あなたはすでに登録されています。",
+            registrationSuccess: "✅ 登録成功。",
+            nextAction: "🤔 次に何をしたいですか？",
+            referrerPoints: "🎉 あなたの紹介者は {points} ポイントを獲得しました！",
+            referredSuccess: "🎉 あなたは紹介者を通じて成功裏に登録しました！"
+        },
+        ar: { // Árabe 🇸🇦
+            alreadyRegistered: "⚠️ أنت مسجل بالفعل.",
+            registrationSuccess: "✅ تم التسجيل بنجاح.",
+            nextAction: "🤔 ماذا ترغب في فعله بعد؟",
+            referrerPoints: "🎉 لقد حصل محالك على {points} نقاط!",
+            referredSuccess: "🎉 لقد قمت بالتسجيل بنجاح عبر محال!"
+        }
+    };
+
+    // 📌 Obtener datos del usuario
+    var userData = Bot.getProperty("user_" + user.telegramid);
+
+    if (userData) {
+        // Borrar los datos del usuario para permitir un nuevo registro
+        Bot.setProperty("user_" + user.telegramid, null); 
+        Bot.sendMessage(messages[lang].alreadyRegistered); // Si el usuario ya está registrado, eliminar datos y permitir nuevo registro
+    } 
+
+    // Si no está registrado o después de borrar los datos, registrar nuevamente
+    var username = user.username ? "@" + user.username : "Usuario_" + user.telegramid;
+    var newUser = {
+        username: username,
+        points: 0,
+        referrals: 0,
+        links: []
+    };
+
+    // Manejo de referidos
+    Libs.ReferralLib.currentUser.track({
+        onAttractedByUser: function (refUser) {
+            Bot.sendMessage(messages[lang].referrerPoints.replace("{points}", 50));
+
+            // 📌 Sumar puntos al referidor si está registrado
+            var referrerData = Bot.getProperty("user_" + refUser.chatId);
+            if (referrerData) {
+                referrerData.points += 50;
+                referrerData.referrals += 1;
+                Bot.setProperty("user_" + refUser.chatId, referrerData, "json");
+            } else {
+                Bot.sendMessage(messages[lang].referredSuccess); // Si el referidor no está registrado
+            }
+        }
+    });
+
+    // Guardar el nuevo usuario
+    Bot.setProperty("user_" + user.telegramid, newUser, "json");
+
+    // Actualizar la lista de usuarios evitando duplicados
+    var allUsers = Bot.getProperty("all_users", []);
+    if (!allUsers.includes(user.telegramid)) {
+        allUsers.push(user.telegramid);
+        Bot.setProperty("all_users", allUsers, "json");
+    }
+
+    Bot.sendMessage(messages[lang].registrationSuccess); // Confirmación de registro exitoso
+
+    // 🛠 Teclado inline con opciones
+    var keyboard = [
+        [{ title: lang === "es" ? "➕ Agregar Enlace" : (lang === "hi" ? "➕ लिंक जोड़ें" : (lang === "zh" ? "➕ 添加链接" : (lang === "ja" ? "➕ リンクを追加" : (lang === "ar" ? "➕ إضافة رابط" : "➕ Add Link")))), command: "/addlink" }],
+        [{ title: lang === "es" ? "🏆 Ver Ranking" : (lang === "hi" ? "🏆 रैंकिंग देखें" : (lang === "zh" ? "🏆 查看排名" : (lang === "ja" ? "🏆 ランキングを見る" : (lang === "ar" ? "🏆 مشاهدة الترتيب" : "🏆 View Ranking")))), command: "/rankings" }],
+        [{ title: lang === "es" ? "💎 Mis Puntos" : (lang === "hi" ? "💎 मेरे अंक" : (lang === "zh" ? "💎 我的积分" : (lang === "ja" ? "💎 私のポイント" : (lang === "ar" ? "💎 نقاطي" : "💎 My Points")))), command: "/checkpoints" }],
+        [{ title: lang === "es" ? "🔙 Volver al Menú" : (lang === "hi" ? "🔙 मेनू पर वापस जाएं" : (lang === "zh" ? "🔙 返回菜单" : (lang === "ja" ? "🔙 メニューに戻る" : (lang === "ar" ? "🔙 العودة إلى القائمة" : "🔙 Back to Menu")))), command: "/start" }]
+    ];
+
+    // Enviar el teclado con un mensaje de acción
+    Bot.sendInlineKeyboard(keyboard, messages[lang].nextAction);
+}
