@@ -1,0 +1,65 @@
+// /setlang
+var lang = params; // Obtener el idioma seleccionado del comando
+
+if (lang) { 
+    // Guardar el idioma seleccionado en la propiedad del usuario 
+    User.setProperty("language", lang, "string");
+
+    // Actualizar el idioma en el objeto de datos del usuario, si existe
+    let userData = Bot.getProperty("user_" + user.telegramid);
+    if (userData) {
+      userData.language = lang;
+      Bot.setProperty("user_" + user.telegramid, userData, "json");
+    }
+
+    // Mensajes de confirmación en diferentes idiomas
+    var messages = {
+        es: {
+            confirmation: "✅ Idioma cambiado a Español.",
+            backToMenu: "🔙 Volver al Menú"
+        },
+        en: {
+            confirmation: "✅ Language changed to English.",
+            backToMenu: "🔙 Back to Menu"
+        },
+        ru: {
+            confirmation: "✅ Язык изменен на Русский.",
+            backToMenu: "🔙 Вернуться в меню"
+        },
+        hi: {  // Hindi
+            confirmation: "✅ भाषा हिंदी में बदल गई।",
+            backToMenu: "🔙 मेनू पर वापस जाएं"
+        },
+        zh: {  // Chino simplificado
+            confirmation: "✅ 语言已更改为中文。",
+            backToMenu: "🔙 返回菜单"
+        },
+        ja: {  // Japonés
+            confirmation: "✅ 言語が日本語に変更されました。",
+            backToMenu: "🔙 メニューに戻る"
+        },
+        ar: {  // Árabe
+            confirmation: "✅ تم تغيير اللغة إلى العربية.",
+            backToMenu: "🔙 العودة إلى القائمة"
+        }
+    };
+
+    // Botón para volver al menú principal
+    var backButton = [[{ title: messages[lang].backToMenu, command: "/start" }]];
+
+    // Enviar mensaje de confirmación con el botón
+    Bot.sendInlineKeyboard(backButton, messages[lang].confirmation);
+} else { 
+    // Mostrar opciones de idioma si no se seleccionó ninguno
+    var langOptions = [
+        [{ title: "🇪🇸 Español", command: "/setlang es" }],
+        [{ title: "🇺🇸 English", command: "/setlang en" }],
+        [{ title: "🇷🇺 Русский", command: "/setlang ru" }],
+        [{ title: "🇮🇳 हिंदी", command: "/setlang hi" }],  // Opción en hindi
+        [{ title: "🇨🇳 中文", command: "/setlang zh" }],  // Opción en chino simplificado
+        [{ title: "🇯🇵 日本語", command: "/setlang ja" }],  // Opción en japonés
+        [{ title: "🇸🇦 العربية", command: "/setlang ar" }]  // Opción en árabe
+    ];
+
+    Bot.sendInlineKeyboard(langOptions, "🌍 Please select your preferred language:");
+}
