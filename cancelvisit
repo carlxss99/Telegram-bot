@@ -1,0 +1,59 @@
+// /cancelvisit
+var lang = User.getProperty("language") || "en"; // Idioma predeterminado: español
+
+var messages = {
+  es: {
+    noVisit: "❌ No tienes ninguna visita en progreso.",
+    visitCancelled: "🚫 Visita cancelada.",
+    backToMenu: "⬅️ Volver al Menú"
+  },
+  en: {
+    noVisit: "❌ You don't have any visit in progress.",
+    visitCancelled: "🚫 Visit cancelled.",
+    backToMenu: "⬅️ Back to Menu"
+  },
+  ru: {
+    noVisit: "❌ У вас нет активного посещения.",
+    visitCancelled: "🚫 Посещение отменено.",
+    backToMenu: "⬅️ Вернуться в меню"
+  },
+  hi: {
+    noVisit: "❌ आपकी कोई यात्रा प्रगति में नहीं है।",
+    visitCancelled: "🚫 यात्रा रद्द कर दी गई।",
+    backToMenu: "⬅️ मेनू पर वापस जाएं"
+  },
+  zh: {
+    noVisit: "❌ 你没有正在进行的访问。",
+    visitCancelled: "🚫 访问已取消。",
+    backToMenu: "⬅️ 返回菜单"
+  },
+  ja: {
+    noVisit: "❌ 進行中の訪問はありません。",
+    visitCancelled: "🚫 訪問がキャンセルされました。",
+    backToMenu: "⬅️ メニューに戻る"
+  },
+  ar: {
+    noVisit: "❌ ليس لديك أي زيارة قيد التقدم.",
+    visitCancelled: "🚫 تم إلغاء الزيارة.",
+    backToMenu: "⬅️ العودة إلى القائمة"
+  }
+};
+
+var visitInProgress = User.getProperty("visit_in_progress");
+if (!visitInProgress) {
+  Bot.sendMessage(messages[lang].noVisit);
+  return;
+}
+
+// Cancelar la visita: se desactiva la bandera y se "limpian" las propiedades relacionadas
+User.setProperty("visit_in_progress", false, "boolean");
+User.setProperty("visit_target", "", "string");
+User.setProperty("visit_username", "", "string");
+User.setProperty("visit_link", "", "string");
+User.setProperty("visit_time", 0, "number");
+
+var keyboard = [
+  [{ title: messages[lang].backToMenu, command: "/start" }]
+];
+
+Bot.sendInlineKeyboard(keyboard, messages[lang].visitCancelled);
