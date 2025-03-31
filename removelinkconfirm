@@ -1,0 +1,76 @@
+// /removelinkconfirm
+var lang = User.getProperty("language") || "en"; // Obtener el idioma del usuario, predeterminado a inglés
+var userData = Bot.getProperty("user_" + user.telegramid) || { links: [] }; // Obtener los datos del usuario
+
+// Obtener el índice del enlace a eliminar, restando 1 para ajustarlo
+var adIndex = parseInt(params) - 1; // Ajustar el índice a 0
+
+// Verificar si el índice es válido
+var invalidIndexMessages = {
+  en: "❌ Invalid link index.",
+  es: "❌ Índice de enlace no válido.",
+  ru: "❌ Неверный индекс ссылки.",
+  hi: "❌ अमान्य लिंक अनुक्रमणिका।",
+  zh: "❌ 无效的链接索引。",
+  ja: "❌ 無効なリンクインデックスです。",
+  ar: "❌ فهرس الرابط غير صالح."
+};
+
+if (isNaN(adIndex) || adIndex < 0 || adIndex >= userData.links.length) {
+  Bot.sendMessage(invalidIndexMessages[lang]);
+  return;
+}
+
+// Eliminar el enlace
+userData.links.splice(adIndex, 1); // Eliminar el enlace en el índice proporcionado
+Bot.setProperty("user_" + user.telegramid, userData, "json"); // Guardar la lista actualizada
+
+// Mensaje de confirmación
+var confirmationMessages = {
+  en: "✅ The link has been successfully removed.",
+  es: "✅ El enlace ha sido eliminado con éxito.",
+  ru: "✅ Ссылка была успешно удалена.",
+  hi: "✅ लिंक सफलतापूर्वक हटा दिया गया है।",
+  zh: "✅ 链接已成功删除。",
+  ja: "✅ リンクが正常に削除されました。",
+  ar: "✅ تم حذف الرابط بنجاح."
+};
+
+Bot.sendMessage(confirmationMessages[lang]);
+
+// Enviar botón para volver al menú
+var menuButton = [
+  [
+    {
+      title:
+        lang === "en"
+          ? "🏠 Back to Menu"
+          : lang === "es"
+          ? "🏠 Volver al Menú"
+          : lang === "ru"
+          ? "🏠 Назад в меню"
+          : lang === "hi"
+          ? "🏠 मेनू पर वापस जाएं"
+          : lang === "zh"
+          ? "🏠 返回菜单"
+          : lang === "ja"
+          ? "🏠 メニューに戻る"
+          : "🏠 العودة إلى القائمة", // Árabe
+      command: "/start" // Comando para volver al menú
+    }
+  ]
+];
+
+// Mensaje opcional después de la confirmación
+var optionMessage = {
+  en: "🌟 Choose an option:",
+  es: "🌟 Elige una opción:",
+  ru: "🌟 Выберите вариант:",
+  hi: "🌟 एक विकल्प चुनें:",
+  zh: "🌟 选择一个选项：",
+  ja: "🌟 オプションを選択してください：",
+  ar: "🌟 اختر خيارًا:"
+};
+
+// Enviar el botón después del mensaje de confirmación
+Bot.sendInlineKeyboard(menuButton, optionMessage[lang]);
