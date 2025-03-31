@@ -1,0 +1,95 @@
+var lang = User.getProperty("language") || "en"; // 🌍 Idioma del usuario, por defecto inglés
+
+// Mensajes en diferentes idiomas
+var messages = {
+    es: {
+        notRegistered: "⚠️ Primero regístrate usando /register.",
+        bonusReceived: "¡Felicidades! 🎉 Has recibido %d puntos como Daily Bonus. ¡Sigue así!",
+        bonusCooldown: "Ya has reclamado tu Daily Bonus. Por favor, espera %d horas, %d minutos y %d segundos para volver a reclamar."
+    },
+    en: {
+        notRegistered: "⚠️ First, you must register using /register.",
+        bonusReceived: "Congratulations! 🎉 You have received %d points as a Daily Bonus. Keep it up!",
+        bonusCooldown: "You have already claimed your Daily Bonus. Please wait %d hours, %d minutes and %d seconds to claim again."
+    },
+    ru: {
+        notRegistered: "⚠️ Сначала зарегистрируйтесь, используя /register.",
+        bonusReceived: "Поздравляем! 🎉 Вы получили %d очков в качестве Daily Bonus. Так держать!",
+        bonusCooldown: "Вы уже получили свой Daily Bonus. Пожалуйста, подождите %d часов, %d минут и %d секунд, чтобы получить его снова."
+    },
+    hi: {
+        notRegistered: "⚠️ पहले /register का उपयोग करके रजिस्टर करें।",
+        bonusReceived: "बधाई हो! 🎉 आपने %d प्वाइंट्स के रूप में Daily Bonus प्राप्त किया। ऐसे ही जारी रखें!",
+        bonusCooldown: "आपने पहले ही अपना Daily Bonus प्राप्त कर लिया है। कृपया %d घंटे, %d मिनट और %d सेकंड का इंतजार करें, फिर से प्राप्त करने के लिए।"
+    },
+    zh: { // Chino simplificado (简体中文)
+        notRegistered: "⚠️ 请先使用 /register 进行注册。",
+        bonusReceived: "🎉 恭喜！你已获得 %d 点作为每日奖励。继续加油！",
+        bonusCooldown: "你已领取每日奖励。请等待 %d 小时 %d 分钟 %d 秒后再领取。"
+    },
+    ja: { // Japonés (日本語)
+        notRegistered: "⚠️ 最初に /register を使用して登録してください。",
+        bonusReceived: "🎉 おめでとうございます！%d ポイントのデイリーボーナスを獲得しました。頑張ってください！",
+        bonusCooldown: "デイリーボーナスはすでに受け取り済みです。%d 時間 %d 分 %d 秒 待ってから再度受け取ってください。"
+    },
+    ar: { // Árabe (العربية)
+        notRegistered: "⚠️ يجب عليك التسجيل أولاً باستخدام /register.",
+        bonusReceived: "🎉 تهانينا! لقد حصلت على %d نقطة كمكافأة يومية. استمر في التقدم!",
+        bonusCooldown: "لقد قمت بالفعل بالمطالبة بالمكافأة اليومية. يرجى الانتظار %d ساعة و %d دقيقة و %d ثانية قبل المطالبة مرة أخرى."
+    }
+};
+
+var userData = Bot.getProperty("user_" + user.telegramid);
+if (!userData) {
+    Bot.sendMessage(messages[lang].notRegistered);
+    return;
+}
+
+var lastBonusTime = User.getProperty("last_daily_bonus_" + user.telegramid);
+var currentTime = new Date().getTime();
+var bonusCooldown = 24 * 60 * 60 * 1000; // 24 horas en milisegundos
+
+if (!lastBonusTime || (currentTime - lastBonusTime >= bonusCooldown)) {
+    var bonusPoints = Math.floor(Math.random() * 50) + 1; // Bonus aleatorio entre 1 y 50 puntos
+    userData.points = (userData.points || 0) + bonusPoints; // Sumar puntos
+    Bot.setProperty("user_" + user.telegramid, userData, "json");
+    User.setProperty("last_daily_bonus_" + user.telegramid, currentTime, "integer");
+
+    var message = messages[lang].bonusReceived.replace("%d", bonusPoints);
+
+    // Teclado inline para volver al menú
+    var keyboard = [[{ title: getButtonText("backToMenu"), command: "/start" }]];
+
+    // Enviar el mensaje del bonus junto con el teclado
+    Bot.sendInlineKeyboard(keyboard, message);
+} else {
+    // Calcular tiempo restante para poder reclamar de nuevo
+    var remainingTime = bonusCooldown - (currentTime - lastBonusTime);
+    var hours = Math.floor(remainingTime / (1000 * 60 * 60));
+    var minutes = Math.floor((remainingTime % (1000 * 60 * 60)) / (1000 * 60));
+    var seconds = Math.floor((remainingTime % (1000 * 60)) / 1000);
+
+    // Formar el mensaje de cooldown usando los valores calculados
+    var cooldownMessage = messages[lang].bonusCooldown.replace("%d", hours).replace("%d", minutes).replace("%d", seconds);
+
+    // Teclado inline para volver al menú
+    var keyboard = [[{ title: getButtonText("backToMenu"), command: "/start" }]];
+
+    Bot.sendInlineKeyboard(keyboard, cooldownMessage);
+}
+
+// Función para obtener el texto del botón según el idioma
+function getButtonText(buttonKey) {
+    var buttonTexts = {
+        backToMenu: {
+            es: "🔙 Volver al Menú",
+            en: "🔙 Back to Menu",
+            ru: "🔙 Вернуться в меню",
+            hi: "🔙 मेनू पर वापस जाएं",
+            zh: "🔙 返回菜单", // Chino simplificado
+            ja: "🔙 メニューに戻る", // Japonés
+            ar: "🔙 العودة إلى القائمة" // Árabe
+        }
+    };
+    return buttonTexts[buttonKey][lang] || buttonTexts[buttonKey].es; // Si no encuentra el idioma, usa español por defecto
+}
