@@ -1,0 +1,142 @@
+// /visitlink
+var lang = User.getProperty("language") || "en"; // Obtener el idioma del usuario, predeterminado a inglés
+
+// Función para generar mensajes dinámicos
+function getMessage(key) {
+  var messages = {
+    es: {
+      notRegistered: "⚠️ Primero debes registrarte usando /register.",
+      noLinksAvailable: "❌ No hay enlaces disponibles para visitar en este momento.",
+      invite: "📢 ¡Invita a tus amigos para que compartan más enlaces!",
+      selectedLink: "🔗 Se ha seleccionado el bot: ",
+      visitPrompt: "👀 Pulsa 'Visitar enlace' para abrirlo y espera la confirmación.",
+      backToMenu: "⬅️ Volver al Menú",
+      visitConfirmed: "✅ ¡Visita confirmada con éxito!",
+      visitButton: "Visitar enlace"
+    },
+    en: {
+      notRegistered: "⚠️ First, you must register using /register.",
+      noLinksAvailable: "❌ There are no available links to visit at the moment.",
+      invite: "📢 Invite your friends so they can share more links!",
+      selectedLink: "🔗 The selected bot is: ",
+      visitPrompt: "👀 Click 'Visit link' to open it and wait for confirmation.",
+      backToMenu: "⬅️ Back to Menu",
+      visitConfirmed: "✅ Visit successfully confirmed!",
+      visitButton: "Visit link"
+    },
+    ru: {
+      notRegistered: "⚠️ Сначала зарегистрируйтесь, используя /register.",
+      noLinksAvailable: "❌ В данный момент нет доступных ссылок для посещения.",
+      invite: "📢 Пригласите своих друзей, чтобы они могли делиться ссылками!",
+      selectedLink: "🔗 Выбранный бот: ",
+      visitPrompt: "👀 Нажмите 'Посетить ссылку', чтобы открыть её и подождите подтверждения.",
+      backToMenu: "⬅️ Вернуться в меню",
+      visitConfirmed: "✅ Посещение успешно подтверждено!",
+      visitButton: "Посетить ссылку"
+    },
+    hi: { // Hindi
+      notRegistered: "⚠️ पहले आपको /register का उपयोग करके पंजीकरण करना होगा।",
+      noLinksAvailable: "❌ इस समय देखने के लिए कोई लिंक उपलब्ध नहीं हैं।",
+      invite: "📢 अपने दोस्तों को आमंत्रित करें ताकि वे अधिक लिंक साझा कर सकें!",
+      selectedLink: "🔗 चयनित बॉट है: ",
+      visitPrompt: "👀 लिंक खोलने और पुष्टि की प्रतीक्षा करने के लिए 'लिंक पर जाएं' पर क्लिक करें।",
+      backToMenu: "⬅️ मेनू पर वापस जाएं",
+      visitConfirmed: "✅ यात्रा सफलतापूर्वक पुष्टि की गई!",
+      visitButton: "लिंक पर जाएं"
+    },
+    zh: { // Chino simplificado
+      notRegistered: "⚠️ 你必须先使用 /register 进行注册。",
+      noLinksAvailable: "❌ 目前没有可访问的链接。",
+      invite: "📢 邀请你的朋友分享更多链接！",
+      selectedLink: "🔗 选定的机器人是: ",
+      visitPrompt: "👀 点击 '访问链接' 打开并等待确认。",
+      backToMenu: "⬅️ 返回菜单",
+      visitConfirmed: "✅ 访问成功确认！",
+      visitButton: "访问链接"
+    },
+    ja: { // Japonés
+      notRegistered: "⚠️ まず /register を使用して登録する必要があります。",
+      noLinksAvailable: "❌ 現在訪問できるリンクはありません。",
+      invite: "📢 友達を招待して、より多くのリンクを共有しましょう！",
+      selectedLink: "🔗 選択されたボット: ",
+      visitPrompt: "👀 「リンクを訪問」をクリックして開き、確認を待ってください。",
+      backToMenu: "⬅️ メニューに戻る",
+      visitConfirmed: "✅ 訪問が正常に確認されました！",
+      visitButton: "リンクを訪問"
+    },
+    ar: { // Árabe
+      notRegistered: "⚠️ أولاً، يجب عليك التسجيل باستخدام /register.",
+      noLinksAvailable: "❌ لا توجد روابط متاحة للزيارة في الوقت الحالي.",
+      invite: "📢 دع أصدقائك يشاركون المزيد من الروابط!",
+      selectedLink: "🔗 الرابط المختار هو: ",
+      visitPrompt: "👀 انقر على 'زيارة الرابط' لفتحه وانتظر التأكيد.",
+      backToMenu: "⬅️ العودة إلى القائمة",
+      visitConfirmed: "✅ تم تأكيد الزيارة بنجاح!",
+      visitButton: "زيارة الرابط"
+    }
+  };
+
+  return messages[lang][key] || messages["es"][key]; // Fallback a español
+}
+
+var userData = Bot.getProperty("user_" + user.telegramid);
+if (!userData) {
+  Bot.sendMessage(getMessage("notRegistered"));
+  return;
+}
+
+// Obtener todos los usuarios que han agregado enlaces
+var allUsers = Bot.getProperty("all_users", []);
+if (allUsers.length === 0) {
+  Bot.sendMessage(getMessage("noLinksAvailable") + "\n\n" + getMessage("invite"));
+  return;
+}
+
+var availableLinks = [];
+allUsers.forEach(function(uid) {
+  if (uid !== user.telegramid) {
+    var data = Bot.getProperty("user_" + uid);
+    if (data && data.links && data.links.length > 0) { // Validar que data.links existe
+      availableLinks = availableLinks.concat(data.links.map(link => ({ id: uid, username: data.username, link: link })));
+    }
+  }
+});
+
+if (availableLinks.length === 0) {
+  Bot.sendMessage(getMessage("noLinksAvailable") + "\n\n" + getMessage("invite"));
+  return;
+}
+
+// Seleccionar un enlace aleatorio de los enlaces disponibles
+var selected = availableLinks[Math.floor(Math.random() * availableLinks.length)];
+
+// Extraer el nombre del bot desde el enlace
+function getBotName(url) {
+  var match = url.match(/t\.me\/([^?]+)/);
+  return match ? match[1] : "desconocido";
+}
+
+var botName = getBotName(selected.link);
+
+// Guardar datos de la visita
+User.setProperty("visit_target", selected.id, "string");
+User.setProperty("visit_username", selected.username, "string");
+User.setProperty("visit_link", selected.link, "string");
+User.setProperty("visit_time", new Date().getTime(), "number"); // Guardar el tiempo de visita
+User.setProperty("visit_in_progress", true, "boolean");
+
+// Crear teclado inline
+var keyboard = [
+  [{ title: getMessage("visitButton"), url: selected.link }],  
+  [{ title: getMessage("backToMenu"), command: "/cancelvisit" }]
+];
+
+Bot.sendInlineKeyboard(
+  keyboard,
+  "🎯 " + getMessage("invite") + "\n\n" +
+  getMessage("selectedLink") + "✨ *" + botName + "* ✨\n\n" +
+  getMessage("visitPrompt")  
+);
+
+// Confirmar la visita automáticamente después de un tiempo (10 segundos en este caso)
+Bot.run({ command: "/confirmvisit", run_after: 10 });
