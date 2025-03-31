@@ -1,0 +1,68 @@
+var lang = User.getProperty("language") || "en"; // 🌍 Obtener el idioma del usuario, predeterminado a inglés
+
+// Mensajes en diferentes idiomas
+var messages = {
+    es: {
+        notRegistered: "❌ Primero regístrate usando /register.",
+        totalPoints: "🎯 Tienes un total de %points% puntos. ¡Sigue visitando enlaces para ganar más!"
+    },
+    en: {
+        notRegistered: "❌ First, register using /register.",
+        totalPoints: "🎯 You have a total of %points% points. Keep visiting links to earn more!"
+    },
+    ru: {
+        notRegistered: "❌ Сначала зарегистрируйтесь с помощью /register.",
+        totalPoints: "🎯 У вас всего %points% баллов. Продолжайте посещать ссылки, чтобы зарабатывать больше!"
+    },
+    hi: { // Hindi 🇮🇳
+        notRegistered: "❌ पहले /register का उपयोग करके पंजीकरण करें।",
+        totalPoints: "🎯 आपके पास कुल %points% अंक हैं। अधिक कमाने के लिए लिंक पर जाना जारी रखें!"
+    },
+    zh: { // Chino simplificado 🇨🇳
+        notRegistered: "❌ 首先使用 /register 进行注册。",
+        totalPoints: "🎯 你总共有 %points% 分。继续访问链接以赚取更多积分！"
+    },
+    ja: { // Japonés 🇯🇵
+        notRegistered: "❌ 最初に/registerを使用して登録してください。",
+        totalPoints: "🎯 あなたは合計で%points%ポイントを持っています。もっとリンクを訪れてポイントを獲得し続けてください！"
+    },
+    ar: { // Árabe 🇸🇦
+        notRegistered: "❌ أولاً، سجل باستخدام /register.",
+        totalPoints: "🎯 لديك إجمالي %points% نقاط. استمر في زيارة الروابط لكسب المزيد!"
+    }
+};
+
+// Obtener los datos del usuario
+var userData = Bot.getProperty("user_" + user.telegramid);
+
+// Verificar si los datos del usuario existen
+if (!userData) {
+    Bot.sendMessage(messages[lang].notRegistered);
+    return;
+}
+
+// Verificar si los puntos existen
+if (typeof userData.points === "undefined") {
+    Bot.sendMessage("❌ Puntos no definidos.");
+    return;
+}
+
+// Reemplazar el marcador de puntos en el mensaje
+var message = messages[lang].totalPoints.replace("%points%", userData.points);
+
+// Definir los títulos de los botones según el idioma
+var buttonTitles = {
+    es: "🔙 Volver al Menú",
+    en: "🔙 Back to Menu",
+    ru: "🔙 Вернуться в меню",
+    hi: "🔙 मेनू पर वापस जाएं",
+    zh: "🔙 返回菜单",
+    ja: "🔙 メニューに戻る",
+    ar: "🔙 العودة إلى القائمة"
+};
+
+// Crear el teclado inline con el botón para volver al menú
+var keyboard = [[{ title: buttonTitles[lang], command: "/start" }]];
+
+// Enviar el mensaje con los puntos y el botón
+Bot.sendInlineKeyboard(keyboard, message);
