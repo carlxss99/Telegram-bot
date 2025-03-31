@@ -1,0 +1,110 @@
+// /addlink
+var lang = User.getProperty("language") || "en"; // Obtener el idioma del usuario, predeterminado a español
+
+// Mensajes en diferentes idiomas
+var messages = {
+  es: {
+    notRegistered: "⚠️ ¡Primero regístrate usando /register! 👤",
+    linkAdded: "✅ ¡Enlace agregado exitosamente! 🎉",
+    invalidLink: "❌ Por favor, proporciona un enlace válido. Ejemplo: usa el comando /addlink + tu enlace https://t.me/... (solo enlaces de Telegram válidos). 🔗",
+    nextAction: "👉 ¿Qué te gustaría hacer a continuación?",
+    linkLimitReached: "🚫 No puedes agregar más de 5 enlaces. ¡Límite alcanzado! 🔒"
+  },
+  en: {
+    notRegistered: "⚠️ First, register using /register! 👤",
+    linkAdded: "✅ Link added successfully! 🎉",
+    invalidLink: "❌ Please provide a valid link. Example: use the command /addlink + your link https://t.me/... (only valid Telegram links). 🔗",
+    nextAction: "👉 What would you like to do next?",
+    linkLimitReached: "🚫 You cannot add more than 5 links. Limit reached! 🔒"
+  },
+  ru: {
+    notRegistered: "⚠️ Сначала зарегистрируйтесь, используя /register! 👤",
+    linkAdded: "✅ Ссылка успешно добавлена! 🎉",
+    invalidLink: "❌ Пожалуйста, предоставьте действительную ссылку. Пример: используйте команду /addlink + ваша ссылка https://t.me/... (только действительные ссылки Telegram). 🔗",
+    nextAction: "👉 Что вы хотите сделать дальше?",
+    linkLimitReached: "🚫 Вы не можете добавить более 5 ссылок. Лимит достигнут! 🔒"
+  },
+  hi: {
+    notRegistered: "⚠️ पहले /register का उपयोग करके पंजीकरण करें! 👤",
+    linkAdded: "✅ लिंक सफलतापूर्वक जोड़ा गया! 🎉",
+    invalidLink: "❌ कृपया एक मान्य लिंक प्रदान करें। उदाहरण: कमांड /addlink + आपका लिंक https://t.me/... (केवल वैध टेलीग्राम लिंक)। 🔗",
+    nextAction: "👉 अगला आप क्या करना चाहेंगे?",
+    linkLimitReached: "🚫 आप 5 से अधिक लिंक नहीं जोड़ सकते। सीमा पूरी हो गई! 🔒"
+  },
+  zh: {
+    notRegistered: "⚠️ 请先使用 /register 进行注册！👤",
+    linkAdded: "✅ 链接添加成功！🎉",
+    invalidLink: "❌ 请输入有效的链接。例如：使用命令 /addlink + 你的链接 https://t.me/...（仅支持有效的 Telegram 链接）。🔗",
+    nextAction: "👉 接下来你想做什么？",
+    linkLimitReached: "🚫 你不能添加超过 5 个链接。已达到上限！🔒"
+  },
+  ja: {
+    notRegistered: "⚠️ まず /register を使用して登録してください！👤",
+    linkAdded: "✅ リンクが正常に追加されました！🎉",
+    invalidLink: "❌ 有効なリンクを提供してください。例: /addlink + あなたのリンク https://t.me/...（有効な Telegram リンクのみ）。🔗",
+    nextAction: "👉 次に何をしますか？",
+    linkLimitReached: "🚫 5 つ以上のリンクを追加することはできません。上限に達しました！🔒"
+  },
+  ar: {
+    notRegistered: "⚠️ أولاً، قم بالتسجيل باستخدام /register! 👤",
+    linkAdded: "✅ تم إضافة الرابط بنجاح! 🎉",
+    invalidLink: "❌ يرجى توفير رابط صالح. مثال: استخدم الأمر /addlink + الرابط الخاص بك https://t.me/... (فقط روابط تليجرام الصالحة). 🔗",
+    nextAction: "👉 ماذا ترغب في القيام به بعد ذلك؟",
+    linkLimitReached: "🚫 لا يمكنك إضافة أكثر من 5 روابط. تم الوصول إلى الحد الأقصى! 🔒"
+  }
+};
+
+// Expresión regular para validar enlaces de Telegram, incluyendo enlaces con parámetros
+const telegramLinkPattern = /^https:\/\/t\.me\/[A-Za-z0-9_-]+(?:\/[A-Za-z0-9_-]+)?(?:\?[\w=&-]+)*$/;
+
+try {
+  // Obtener los datos del usuario
+  var userData = Bot.getProperty("user_" + user.telegramid) || { links: [] };
+
+  // Comprobar si el usuario está registrado
+  if (!userData.username) {
+    Bot.sendMessage(messages[lang].notRegistered);
+    return;
+  }
+
+  // Comprobar si el enlace es válido
+  if (params && telegramLinkPattern.test(params)) {
+    // Comprobar si el enlace ya está agregado
+    if (userData.links.includes(params)) {
+      Bot.sendMessage(messages[lang].invalidLink + " Este enlace ya está agregado. 🚫");
+      return;
+    }
+
+    // Limitar a un máximo de 5 enlaces
+    if (userData.links.length < 5) {
+      userData.links.push(params); // Agregar el enlace
+      Bot.setProperty("user_" + user.telegramid, userData, "json"); // Guardar los datos del usuario
+      Bot.sendMessage(messages[lang].linkAdded);
+
+      // Asegurarse de que el usuario esté en all_users
+      var allUsers = Bot.getProperty("all_users", []);
+      if (!allUsers.includes(user.telegramid)) {
+        allUsers.push(user.telegramid);
+        Bot.setProperty("all_users", allUsers, "json");
+      }
+    } else {
+      Bot.sendMessage(messages[lang].linkLimitReached);
+    }
+  } else {
+    Bot.sendMessage(messages[lang].invalidLink);
+  }
+
+} catch (error) {
+  Bot.sendMessage("❌ Ocurrió un error inesperado. Inténtalo nuevamente más tarde.");
+  console.error("Error inesperado:", error); // Esto lo imprimirá en la consola
+}
+
+// Crear teclado inline
+var keyboard = [
+  [{ title: lang === "es" ? "➕ Agregar Otro Enlace" : (lang === "en" ? "➕ Add Another Link" : (lang === "ru" ? "➕ Добавить другую ссылку" : (lang === "hi" ? "➕ दूसरा लिंक जोड़ें" : (lang === "zh" ? "➕ 添加另一个链接" : (lang === "ar" ? "➕ إضافة رابط آخر" : "➕ 別のリンクを追加"))))), command: "/addlink" }],
+  [{ title: lang === "es" ? "❌ Eliminar Enlace" : (lang === "en" ? "❌ Remove Link" : (lang === "ru" ? "❌ Удалить ссылку" : (lang === "hi" ? "❌ लिंक हटाएं" : (lang === "zh" ? "❌ 删除链接" : (lang === "ar" ? "❌ إزالة الرابط" : "❌ リンクを削除"))))), command: "/removelink" }],
+  [{ title: lang === "es" ? "🏆 Ver Ranking" : (lang === "en" ? "🏆 View Ranking" : (lang === "ru" ? "🏆 Посмотреть рейтинг" : (lang === "hi" ? "🏆 रैंकिंग देखें" : (lang === "zh" ? "🏆 查看排名" : (lang === "ar" ? "🏆 عرض الترتيب" : "🏆 ランキングを見る"))))), command: "/rankings" }],
+  [{ title: lang === "es" ? "🔙 Volver al Menú" : (lang === "en" ? "🔙 Back to Menu" : (lang === "ru" ? "🔙 Назад в меню" : (lang === "hi" ? "🔙 मेनू पर वापस जाएं" : (lang === "zh" ? "🔙 返回菜单" : (lang === "ar" ? "🔙 العودة إلى القائمة" : "🔙 メニューに戻る"))))), command: "/start" }]
+];
+
+Bot.sendInlineKeyboard(keyboard, messages[lang].nextAction);
